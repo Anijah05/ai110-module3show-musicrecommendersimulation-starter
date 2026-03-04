@@ -86,6 +86,11 @@ class Recommender:
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     """Scores one song and returns both the numeric score and explanation reasons."""
+    genre_weight = 1.0
+    mood_weight = 1.0
+    energy_weight = 2.0
+    acoustic_bonus = 0.5
+
     score = 0.0
     reasons: List[str] = []
 
@@ -100,20 +105,21 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     song_acousticness = float(song.get("acousticness", 0.0))
 
     if song_genre == preferred_genre and preferred_genre:
-        score += 2.0
-        reasons.append("genre match (+2.0)")
+        score += genre_weight
+        reasons.append(f"genre match (+{genre_weight:.1f})")
 
     if song_mood == preferred_mood and preferred_mood:
-        score += 1.0
-        reasons.append("mood match (+1.0)")
+        score += mood_weight
+        reasons.append(f"mood match (+{mood_weight:.1f})")
 
     energy_similarity = max(0.0, 1.0 - abs(song_energy - target_energy))
-    score += energy_similarity
-    reasons.append(f"energy similarity (+{energy_similarity:.2f})")
+    weighted_energy = energy_similarity * energy_weight
+    score += weighted_energy
+    reasons.append(f"energy similarity (+{weighted_energy:.2f})")
 
     if likes_acoustic and song_acousticness >= 0.60:
-        score += 0.5
-        reasons.append("acoustic preference match (+0.5)")
+        score += acoustic_bonus
+        reasons.append(f"acoustic preference match (+{acoustic_bonus:.1f})")
 
     return score, reasons
 
