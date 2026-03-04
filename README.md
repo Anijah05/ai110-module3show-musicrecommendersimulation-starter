@@ -17,17 +17,73 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders score each item using many signals, then rank items by predicted fit. My simulation focuses on a transparent content-based vibe match, with strongest priority on `genre` and `mood`, and a closeness-based score for `energy` so songs near the user's target energy are rewarded. This mirrors real recommendation pipelines at a small scale: feature matching first, then ranking top candidates.
 
-Some prompts to answer:
+`Song` features used in this simulation:
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+- `genre`
+- `mood`
+- `energy`
+- `tempo_bpm`
+- `valence`
+- `danceability`
+- `acousticness`
 
-You can include a simple diagram or bullet list if helpful.
+`UserProfile` features used in this simulation:
+
+- `favorite_genre`
+- `favorite_mood`
+- `target_energy`
+- `likes_acoustic`
+
+Example user profile for testing:
+
+```python
+user_profile = {
+      "favorite_genre": "lofi",
+      "favorite_mood": "chill",
+      "target_energy": 0.40,
+      "likes_acoustic": True,
+}
+```
+
+Profile critique: this profile is broad enough to separate "intense rock" from "chill lofi" because it combines categorical filters (`genre`, `mood`) with a low target energy. To reduce narrowness, test additional profiles (for example, high-energy pop and moody synthwave) and compare recommendations.
+
+Finalized Algorithm Recipe:
+
+- +2.0 points for a `genre` match.
+- +1.0 point for a `mood` match.
+- +`(1 - abs(song_energy - target_energy))` similarity points for energy closeness.
+- +0.5 bonus if `likes_acoustic` is true and `acousticness >= 0.60`.
+
+Scoring Rule vs Ranking Rule:
+
+- Scoring Rule computes one song's fit score using the formula above.
+- Ranking Rule sorts all songs by score (highest first) and returns Top K.
+- Both are required: scoring evaluates each item, ranking turns many scores into a final recommendation list.
+
+Data Flow Map:
+
+```mermaid
+flowchart LR
+      A[Input: User Preferences\nGenre, Mood, Target Energy, Acoustic Pref] --> B[Load songs.csv Catalog]
+      B --> C[Loop Through Songs]
+      C --> D[Score One Song\nGenre + Mood + Energy Similarity + Acoustic Bonus]
+      D --> E[Store song + score + explanation]
+      E --> F[Sort by score descending]
+      F --> G[Output: Top K Recommendations]
+```
+
+Potential bias note: this system may over-prioritize genre and miss cross-genre songs that match mood and energy; with a small catalog, recommendation diversity is also limited.
+
+Prompts used with Copilot Chat:
+
+- Dataset expansion prompt:
+   "Using #file:data/songs.csv, generate 8 new songs in valid CSV rows with the same headers (id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness). Use genres and moods not already common in the file, keep numeric values realistic (0.0-1.0 where needed), and avoid duplicates."
+- User profile critique prompt:
+   "Critique this user profile for recommendation quality: {favorite_genre: lofi, favorite_mood: chill, target_energy: 0.40, likes_acoustic: true}. Will this clearly differentiate intense rock from chill lofi, or is it too narrow? Suggest one broader alternative profile."
+- Scoring logic design prompt:
+   "Using #file:data/songs.csv, propose point-weighting strategies for a content-based recommender. Compare genre vs mood weight importance, include an energy closeness formula (not just higher/lower), and recommend a final scoring + ranking recipe for Top K output."
 
 ---
 
