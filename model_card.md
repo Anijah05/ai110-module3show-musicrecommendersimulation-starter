@@ -1,12 +1,11 @@
-# 🎧 Model Card: Music Recommender Simulation
+Model Card Music Recommender Simulation
 
-## 1. Model Name  
 
-**VibeFinder 1.0**
+VibeFinder 1.0
 
 ---
 
-## 2. Intended Use  
+ Intended Use  
 
 **Goal / Task:** This recommender suggests Top 5 songs from a small CSV catalog based on user taste features.
 
@@ -16,7 +15,6 @@
 
 The system assumes users can describe their taste with genre, mood, energy, and acoustic preference.
 
----
 
 ## 3. How the Model Works  
 
@@ -29,7 +27,6 @@ Used user features: favorite genre, favorite mood, target energy, likes acoustic
 
 I changed the starter logic by increasing energy importance and reducing genre weight in one experiment.
 
----
 
 ## 4. Data  
 
@@ -37,11 +34,10 @@ The dataset has 18 songs in `data/songs.csv`.
 
 It includes genres like pop, lofi, rock, ambient, jazz, synthwave, hip hop, classical, reggae, metal, country, edm, r&b, latin, and indie pop.
 
-It includes moods like happy, chill, intense, relaxed, moody, focused, confident, calm, uplifting, aggressive, nostalgic, euphoric, romantic, and playful.
+It includes moods like happy, chill, intense, relaxed, moody.
 
 The data is still small, so many real music styles, languages, and subcultures are missing.
 
----
 
 ## 5. Strengths  
 
@@ -51,7 +47,6 @@ It gives understandable reasons for each recommendation, which makes debugging e
 
 The energy similarity feature captures vibe intensity better than simple high/low rules.
 
----
 
 ## 6. Limitations and Bias 
 
@@ -63,7 +58,6 @@ This can create a filter bubble, where the same high-energy tracks appear across
 
 The model also ignores lyrics, language, culture, and listening context.
 
----
 
 ## 7. Evaluation  
 
@@ -75,7 +69,6 @@ Most clear profiles gave expected results, but high-energy songs still appeared 
 
 The biggest surprise was how often one energetic song could appear for users who only partly matched that vibe.
 
----
 
 ## 8. Future Work  
 
@@ -83,7 +76,6 @@ The biggest surprise was how often one energetic song could appear for users who
 2. Add more user controls (tempo range, valence target, danceability target).
 3. Expand the dataset with more genres, languages, and artists.
 
----
 
 ## 9. Personal Reflection  
 

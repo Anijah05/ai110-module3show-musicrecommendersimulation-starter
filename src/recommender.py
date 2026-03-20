@@ -36,6 +36,7 @@ class Recommender:
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+        """Returns top-k recommended songs for a user profile."""
         user_prefs = {
             "genre": user.favorite_genre,
             "mood": user.favorite_mood,
@@ -62,6 +63,7 @@ class Recommender:
         return [id_to_song[item[0]["id"]] for item in ranked]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
+        """Returns a human-readable explanation of why a song was recommended."""
         user_prefs = {
             "genre": user.favorite_genre,
             "mood": user.favorite_mood,
@@ -86,9 +88,9 @@ class Recommender:
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     """Scores one song and returns both the numeric score and explanation reasons."""
-    genre_weight = 1.0
+    genre_weight = 2.0
     mood_weight = 1.0
-    energy_weight = 2.0
+    energy_weight = 1.0
     acoustic_bonus = 0.5
 
     score = 0.0

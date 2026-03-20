@@ -1,4 +1,4 @@
-# 🎵 Music Recommender Simulation
+# Music Recommender Simulation
 
 ## Project Summary
 
@@ -64,17 +64,42 @@ Scoring Rule vs Ranking Rule:
 
 Data Flow Map:
 
+Input → Process → Output:
+
+- Input: user preferences (`genre`, `mood`, `target_energy`, `likes_acoustic`)
+- Process: loop through every song in `data/songs.csv`, score each song, store `(song, score, reasons)`
+- Output: sort all scored songs descending and return Top K recommendations
+
 ```mermaid
 flowchart LR
-      A[Input: User Preferences\nGenre, Mood, Target Energy, Acoustic Pref] --> B[Load songs.csv Catalog]
-      B --> C[Loop Through Songs]
-      C --> D[Score One Song\nGenre + Mood + Energy Similarity + Acoustic Bonus]
-      D --> E[Store song + score + explanation]
-      E --> F[Sort by score descending]
-      F --> G[Output: Top K Recommendations]
+   A[Input: User Preferences\nGenre, Mood, Target Energy, Likes Acoustic] --> B[Load songs.csv Catalog]
+   B --> C[For each song in CSV]
+   C --> D[Score One Song\n+2 genre, +1 mood, + energy closeness, +0.5 acoustic bonus]
+   D --> E[Save song + score + reasons]
+   E --> F[Repeat until all songs are scored]
+   F --> G[Ranking Rule: sort all songs by score desc]
+   G --> H[Output: Top K Recommendations]
 ```
 
 Potential bias note: this system may over-prioritize genre and miss cross-genre songs that match mood and energy; with a small catalog, recommendation diversity is also limited.
+
+CLI Verification (Phase 3 Step 4):
+
+- Run: `python -m src.main`
+- Verified load count: `Loaded songs: 18`
+- Default profile check (High-Energy Pop): Top result is `Sunrise City` with reasons including genre, mood, and energy similarity.
+
+## Sample Output
+
+When you run `python -m src.main`, the recommender scores and ranks songs based on each user profile. Here's an example of the terminal output showing the scoring logic in action:
+
+![CLI recommendations output](docs/cli-output.png)
+
+The output demonstrates:
+- **Song ranking** by calculated score (highest first)
+- **Scoring breakdown** showing points awarded for genre match, mood match, energy similarity, and acoustic preference
+- **Transparent reasoning** so users understand why each song was recommended
+- **Multiple test profiles** showing how different preferences yield different top-5 results
 
 Prompts used with Copilot Chat:
 
@@ -165,7 +190,7 @@ Write 1 to 2 paragraphs here about what you learned:
 Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
 
 ```markdown
-# 🎧 Model Card - Music Recommender Simulation
+# Model Card - Music Recommender Simulation
 
 ## 1. Model Name
 
