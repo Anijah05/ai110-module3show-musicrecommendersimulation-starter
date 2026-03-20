@@ -50,24 +50,35 @@ The energy similarity feature captures vibe intensity better than simple high/lo
 
 ## 6. Limitations and Bias 
 
-One weakness is over-reliance on energy similarity. Songs with close energy can rank high even when mood does not match.
+**Filter Bubble Risk:** The system strongly rewards energy closeness, which can cause "Gym Hero" (pop, 0.93 energy) to rank high for users searching for genres other than pop if their target energy is ~0.88. This energy-based ranking can trap users in songs that "feel" similar even if the genre is different, narrowing their discovery.
 
-The catalog is small, so some user tastes are underrepresented.
+**Cross-Genre Discovery Gap:** When a user's preferred genre is absent (e.g., searching for "k-pop"), the system falls back entirely to mood and energy matching. With only one feature match available, songs become indistinguishable from each other by score alone. A larger dataset with more genres would help.
 
-This can create a filter bubble, where the same high-energy tracks appear across many profiles.
+**Small Catalog Homogeneity:** With 18 songs, many songs share similar energy levels (0.74-0.93 range). This creates redundancy in the top-5—high-energy recommendations stay similar across different profiles because there are few low-energy alternatives to choose from.
 
-The model also ignores lyrics, language, culture, and listening context.
+**Missing Context:** The system ignores lyrics, artist popularity, listening context (workout vs sleep vs focus), and cultural/linguistic diversity. It also doesn't account for user history or temporal trends. A real recommender would incorporate these signals.
 
 
 ## 7. Evaluation  
 
-I tested five profiles: High-Energy Pop, Chill Lofi, Deep Intense Rock, a conflicting edge case, and an unknown-genre edge case.
+**Test Profiles:**
+- High-Energy Pop: genre="pop", mood="happy", energy=0.88, acoustic=false
+- Chill Lofi: genre="lofi", mood="chill", energy=0.35, acoustic=true  
+- Deep Intense Rock: genre="rock", mood="intense", energy=0.92, acoustic=false
+- Conflicting Edge Case: genre="ambient", mood="sad", energy=0.90, acoustic=true (high energy + sad mood conflict)
+- Unknown Genre Edge Case: genre="k-pop", mood="focused", energy=0.50, acoustic=false (genre not in dataset)
 
-For each profile, I inspected the Top 5 songs and checked if the ranking reasons made sense.
+**Results and Interpretations:**
 
-Most clear profiles gave expected results, but high-energy songs still appeared often when mood was not a match.
+Clear profiles (Chill Lofi, Deep Intense Rock) produced intuitive top-5 lists where the #1 song had all four features matching (genre + mood + energy + acoustic). However, the High-Energy Pop profile revealed a key weakness: **"Gym Hero" by Max Pulse ranked 2nd despite not being pop**, beating out the indie-pop "Rooftop Lights." This happened because Gym Hero has energy 0.93, matching the target 0.88 more closely than any other non-pop song, so the energy similarity bonus (+0.95) outweighed the missing genre match.
 
-The biggest surprise was how often one energetic song could appear for users who only partly matched that vibe.
+Edge cases were revealing. The conflicting profile (high energy + sad mood) couldn't find well-matched songs because no songs combined those features. "Spacewalk Thoughts" (ambient + chill) ranked first only because it matched mood and was highly acoustic—the energy mismatch (0.28 vs 0.90 target) cost -1.24 points. The unknown-genre profile fell back to mood and energy, with "Focus Flow" winning purely on mood match and energy similarity.
+
+**Weight Sensitivity Experiment:**
+I tested doubling energy weight (1.0→2.0) and halving genre weight (2.0→1.0) to see if that would reduce genre dominance. Result: the **same 5 songs ranked in both versions**. For Chill Lofi, the top song stayed identical (Library Rain 4.50/4.50), proving that when both genre and energy are strong matches, small weight changes don't shift the ranking significantly. This suggests the system works best for users whose preferred genre aligns with their energy level, and struggles for cross-genre searchers.
+
+**Biggest Surprise:**
+Songs with mid-range energy (like 0.74-0.82) appeared frequently across multiple profile recommendations, even when mood was mismatched. This is because energy similarity is calculated as a closeness score: even songs 0.3 energy points away still get +0.7 bonus, making them competitive against songs with only one feature match.
 
 
 ## 8. Future Work  
@@ -79,10 +90,12 @@ The biggest surprise was how often one energetic song could appear for users who
 
 ## 9. Personal Reflection  
 
-My biggest learning moment was seeing how small weight changes can shift recommendations a lot.
+My biggest learning moment was seeing how energy similarity becomes the dominant factor when genre matches are limited. When I tested doubling energy weight, the rankings barely changed because energy was already the tiebreaker—not because genre wasn't important, but because genre alone isn't enough to differentiate songs.
 
-AI tools helped me draft logic and speed up coding, but I still had to verify imports, check outputs, and test edge cases manually.
+I was surprised that "Gym Hero" ranked #2 for High-Energy Pop despite being a different genre. This taught me that energy closeness is a powerful ranking signal, which is good for vibe-matching but bad for genre diversity. In a real recommender, I would add a diversity penalty to reduce repetition.
 
-I was surprised that a simple scoring formula can still feel like a real recommender when explanations are clear.
+AI tools helped me draft the scoring logic and experiment code quickly, but manual testing was essential. I had to trace through why specific songs ranked where they did, and that detective work revealed the energy-as-tiebreaker pattern that the weights alone didn't show.
 
-If I continue this project, I would build a small Streamlit UI and add profile comparison charts to make behavior easier to analyze.
+I was surprised that a simple scoring formula can still feel like a real recommender when explanations are clear. Users trust a system when they understand its reasoning, even if the math is basic. This is why the "reasons" list became the most important part of my output.
+
+If I continue this project, I would: (1) expand the dataset to 200+ songs with more genre and mood diversity, (2) add a diversity penalty to the scoring function to reduce repetition in top-5, and (3) build a Streamlit UI to let users adjust weights and see results in real-time. I'd also collect user feedback on whether recommendations "feel right" versus just scoring well mathematically.
