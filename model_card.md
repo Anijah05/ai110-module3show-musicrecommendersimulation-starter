@@ -1,54 +1,70 @@
-Model Card Music Recommender Simulation
+# Music Recommender Simulation: Model Card
 
+## 1. Model Name & Overview
 
-VibeFinder 1.0
+**Model Name:** VibeFinder 1.0
+
+**Goal / Task:** This recommender suggests top 5 songs from a small CSV catalog based on user taste features like genre, mood, energy level, and acoustic preference. It's designed to demonstrate how content-based recommendation systems work by matching learned user preferences against song attributes.
 
 ---
 
- Intended Use  
-
-**Goal / Task:** This recommender suggests Top 5 songs from a small CSV catalog based on user taste features.
-
-**Intended Use:** It is for classroom learning and simple experiments with recommendation logic.
-
-**Non-Intended Use:** It should not be used for real user decisions, mental health use, or any high-stakes personalization.
-
-The system assumes users can describe their taste with genre, mood, energy, and acoustic preference.
-
-
-## 3. How the Model Works  
+## 2. How the Model Works  
 
 **Algorithm Summary:**
 
-Each song gets a score. The model adds points for a genre match and mood match. It also adds energy similarity points, so songs close to the target energy score higher. It gives a small bonus if the user likes acoustic songs and the track is highly acoustic.
+The recommendation system scores each song in the catalog using a weighted formula:
 
-Used song features: genre, mood, energy, tempo, valence, danceability, acousticness.
-Used user features: favorite genre, favorite mood, target energy, likes acoustic.
+- **+2.0 points** for genre match: Does the song match the user's favorite genre?
+- **+1.0 point** for mood match: Does the song match the user's favorite mood?
+- **+energy similarity** based on closeness: We calculate `1 - |song_energy - target_energy|` and multiply by weight (1.0), rewarding songs that are close to the user's target energy level. A user targeting energy 0.88 gets +0.95 for a song at 0.93 energy, but only +0.60 for a song at 0.28 energy.
+- **+0.5 bonus** if the user likes acoustic songs AND the song has high acousticness (≥ 0.60)
 
-I changed the starter logic by increasing energy importance and reducing genre weight in one experiment.
+**Example Scoring:** For a user who loves "pop" + "happy" + energy 0.88 + likes acoustic:
+- "Sunrise City" (pop, happy, 0.82 energy, 0.18 acoustic): 2.0 + 1.0 + 0.94 + 0 = **3.94 points** → Ranks #1
+- "Gym Hero" (pop, intense, 0.93 energy, 0.05 acoustic): 2.0 + 0 + 0.95 + 0 = **2.95 points** → Ranks #2 (same genre + closest energy, but wrong mood)
 
+The system then **sorts all songs by score (highest first) and returns the top K recommendations** (default K=5).
 
-## 4. Data  
+**Key design choice:** Energy is a "tiebreaker" when multiple songs have the same genre AND mood. This makes songs with similar energy rank high even if other features don't match as well.
 
-The dataset has 18 songs in `data/songs.csv`.
+---
 
-It includes genres like pop, lofi, rock, ambient, jazz, synthwave, hip hop, classical, reggae, metal, country, edm, r&b, latin, and indie pop.
+## 3. Data Used
 
-It includes moods like happy, chill, intense, relaxed, moody.
+**Dataset Size & Source:** 18 songs in `data/songs.csv` (small, curated catalog for learning purposes).
 
-The data is still small, so many real music styles, languages, and subcultures are missing.
+**Song Features Used in Scoring:**
+- `genre` (categorical): pop, lofi, rock, ambient, jazz, synthwave, hip hop, classical, reggae, metal, country, edm, r&b, latin, indie pop
+- `mood` (categorical): happy, chill, intense, relaxed, moody, calm, confident, aggressive, nostalgic, uplifting, focused, romantic, playful, euphoric
+- `energy` (0.0-1.0, float): intensity/vibrancy of the track
+- `tempo_bpm` (float): beats per minute (not currently used in scoring, but available)
+- `valence` (0.0-1.0, float): musical positivity/brightness (not currently used in scoring)
+- `danceability` (0.0-1.0, float): how suitable for dancing (not currently used in scoring)
+- `acousticness` (0.0-1.0, float): proportion of acoustic instrumentation
 
+**User Features (Preferences):**
+- `favorite_genre`: The genre the user prefers
+- `favorite_mood`: The mood the user prefers
+- `target_energy`: A number 0.0-1.0 representing desired song intensity
+- `likes_acoustic`: Boolean (true/false) for acoustic preference
 
-## 5. Strengths  
+**Data Limitations:** The dataset only has 18 songs, covering 15 unique genres and 14 unique moods. This means many real music styles, languages, regional traditions, and subcultures are not represented. The small size creates clustering (many songs in the 0.74-0.93 energy range), which limits recommendation diversity.
 
-The model works well for clear profiles like "Chill Lofi" and "Deep Intense Rock." 
+---
 
-It gives understandable reasons for each recommendation, which makes debugging easier.
+## 4. Model Strengths
 
-The energy similarity feature captures vibe intensity better than simple high/low rules.
+The model works well for clear profiles like "Chill Lofi" and "Deep Intense Rock" where the user's preferred genre, mood, and energy level align.
 
+It gives understandable reasons for each recommendation (genre match, mood match, energy similarity, acoustic bonus), which makes debugging easier and helps users trust the system.
 
-## 6. Limitations and Bias 
+The energy similarity feature captures vibe intensity better than simple "high" or "low" rules. By rewarding closeness to a target energy, we can recommend songs that feel energetically similar even across different genres.
+
+The explanations ("reasons" list) are the most important feature—users trust a system when they understand why a song was recommended, even if the math is simple.
+
+---
+
+## 5. Model Limitations & Observed Biases
 
 **Filter Bubble Risk:** The system strongly rewards energy closeness, which can cause "Gym Hero" (pop, 0.93 energy) to rank high for users searching for genres other than pop if their target energy is ~0.88. This energy-based ranking can trap users in songs that "feel" similar even if the genre is different, narrowing their discovery.
 
@@ -59,7 +75,7 @@ The energy similarity feature captures vibe intensity better than simple high/lo
 **Missing Context:** The system ignores lyrics, artist popularity, listening context (workout vs sleep vs focus), and cultural/linguistic diversity. It also doesn't account for user history or temporal trends. A real recommender would incorporate these signals.
 
 
-## 7. Evaluation  
+## 6. How the System Was Tested & Evaluated
 
 **Test Profiles:**
 - High-Energy Pop: genre="pop", mood="happy", energy=0.88, acoustic=false
@@ -81,14 +97,41 @@ I tested doubling energy weight (1.0→2.0) and halving genre weight (2.0→1.0)
 Songs with mid-range energy (like 0.74-0.82) appeared frequently across multiple profile recommendations, even when mood was mismatched. This is because energy similarity is calculated as a closeness score: even songs 0.3 energy points away still get +0.7 bonus, making them competitive against songs with only one feature match.
 
 
-## 8. Future Work  
+---
 
-1. Add diversity rules so the Top 5 is not dominated by one style.
-2. Add more user controls (tempo range, valence target, danceability target).
-3. Expand the dataset with more genres, languages, and artists.
+## 7. Intended Use & Non-Intended Use
 
+**Intended Use:**
+- Educational tool for learning how content-based recommendation systems work
+- Simple demonstration of scoring, ranking, and explanation generation
+- Experiment with weight changes and their effects on recommendations
+- Test case study for how energy similarity can create filter bubbles
 
-## 9. Personal Reflection  
+**Non-Intended Use:**
+- Do not use for real user personalization or commercial recommendations
+- Do not use for mental health, well-being, or mood management (it's not trained on actual user data or therapeutic knowledge)
+- Do not rely on it for high-stakes decisions about music or audio content
+- Do not assume it represents real music taste patterns without much larger datasets
+
+**Key Assumption:** The system assumes users can describe their taste with four simple features (genre, mood, energy, acoustic preference) and that these features are sufficient to find songs they'll like.
+
+---
+
+## 8. Potential Improvements for Future Versions
+
+1. **Add diversity rules** so the Top 5 isn't dominated by one style. For example, penalize songs too similar to already-ranked songs.
+
+2. **Expand the dataset** to 200+ songs with better representation of genres, languages, cultural styles, and mood ranges.
+
+3. **Add Streaming UI** (using Streamlit) to let users adjust weights in real-time and see how recommendations change.
+
+4. **Incorporate user history** to avoid recommending the same songs repeatedly and learn from clicks/plays.
+
+5. **Add dynamic features** like listening context (workout vs. sleep vs. focus) and temporal trends (what's popular now?).
+
+---
+
+## 9. Personal Reflection: What I Learned
 
 My biggest learning moment was seeing how energy similarity becomes the dominant factor when genre matches are limited. When I tested doubling energy weight, the rankings barely changed because energy was already the tiebreaker—not because genre wasn't important, but because genre alone isn't enough to differentiate songs.
 
